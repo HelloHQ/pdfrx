@@ -2,11 +2,47 @@ import 'dart:io';
 
 import 'package:archive/archive_io.dart';
 import 'package:code_assets/code_assets.dart';
+import 'package:crypto/crypto.dart';
 import 'package:hooks/hooks.dart';
 import 'package:http/http.dart' as http;
 
 const _pdfiumRelease = 'chromium%2F7811';
 const _assetName = 'libpdfium';
+
+/// HelloHQ's attested mirror of bblanchon/pdfium-binaries.
+///
+/// Upstream is fetched over plain HTTPS with no checksum and no provenance, so
+/// on Linux, Windows and Android the app linked whatever that URL served at
+/// build time — the only native library in the tree outside the trust gate
+/// every other one goes through. (Darwin was already fixed separately: the
+/// pdfium_flutter local binaryTarget in 94bc8c1.)
+///
+/// The mirror re-releases the same bytes with SLSA build provenance, and the
+/// digests below are checked before anything decodes the archive. Upstream
+/// publishes no checksums file, so the mirror's own first adoption is
+/// trust-on-first-use; from that point the bytes are immutable and any
+/// substitution fails here.
+const _mirrorRelease =
+    'https://github.com/HelloHQ/pdfium-xcframework/releases/download/'
+    'binaries-chromium-7811';
+
+/// SHA-256 per mirrored asset, from the release's SHA256SUMS.
+///
+/// A target absent from this map is a hard failure, not a fall-through to
+/// upstream: silently reverting to an unverified download is exactly the state
+/// this change exists to remove.
+const _pinnedDigests = <String, String>{
+  'pdfium-android-arm.tgz':
+      'bb9250eefb33343f56f27f7e60c81ab3236d932c40e21557bf02ca4c276eb832',
+  'pdfium-android-arm64.tgz':
+      'f51539cadeb5135534305b8bdf8685ce2fbe9991dbbc5b35f553108411b9ed14',
+  'pdfium-android-x64.tgz':
+      '23faaf6f993a39524d9dc7fafbb760e295f8bd5e9ffa46139bad2299fb5c80f3',
+  'pdfium-linux-x64.tgz':
+      'e76e0a37aefb843d56f04657475ce612157021b1ebc53d801f2fbfcc537ccf64',
+  'pdfium-win-x64.tgz':
+      '2e7af12674ac3716cb0e20369bb9fb269ceadfa2f0b0597097a520e6834175a0',
+};
 
 void main(List<String> args) async {
   await build(args, (input, output) async {
@@ -44,14 +80,35 @@ Future<void> _downloadPdfium({
   final output = File.fromUri(outputFile);
   if (await output.exists()) return;
 
-  final archiveUri = Uri.parse(
-    'https://github.com/bblanchon/pdfium-binaries/releases/download/'
-    '$pdfiumRelease/pdfium-${target.archivePlatform}-${target.archiveArch}.tgz',
-  );
+  final assetName =
+      'pdfium-${target.archivePlatform}-${target.archiveArch}.tgz';
+  final expected = _pinnedDigests[assetName];
+  if (expected == null) {
+    throw Exception(
+      'No pinned SHA-256 for $assetName. Mirror it into '
+      'HelloHQ/pdfium-xcframework and add its digest to _pinnedDigests — do '
+      'not fall back to an unverified upstream download.',
+    );
+  }
+
+  final archiveUri = Uri.parse('$_mirrorRelease/$assetName');
 
   final response = await http.Client().get(archiveUri);
   if (response.statusCode != 200) {
     throw Exception('Failed to download PDFium: $archiveUri');
+  }
+
+  // Verified BEFORE the archive is decoded: a tampered tarball should never
+  // reach the decoder, let alone the output file.
+  final actual = sha256.convert(response.bodyBytes).toString();
+  if (actual != expected) {
+    throw Exception(
+      'PDFium SHA-256 mismatch for $assetName.\n'
+      '  expected: $expected\n'
+      '  actual:   $actual\n'
+      'The mirrored bytes changed. Do not update the pin without establishing '
+      'why.',
+    );
   }
 
   final archive = TarDecoder().decodeBytes(
