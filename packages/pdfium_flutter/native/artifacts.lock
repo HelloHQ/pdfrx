@@ -1,0 +1,7 @@
+# Trust-gate manifest for the PDFium xcframework (hellohq_db pattern).
+# The mirror re-releases the byte-identical upstream artifact with SLSA
+# provenance; this SHA-256 equals upstream Package.swift's SwiftPM checksum.
+REPO: HelloHQ/pdfium-xcframework
+RELEASE_TAG: v144.0.7811.0-20260502-190206
+ARCHIVE: PDFium-chromium-7811-20260502-190206.xcframework.zip
+SHA256: 948d9257f53f01cbed74b81bb8adc8758e52ac9390751772de7889026d32d5a1

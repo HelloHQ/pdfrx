@@ -1,0 +1,3 @@
+# Provisioned by tool/fetch-native.sh — never commit binaries.
+*
+!.gitignore
