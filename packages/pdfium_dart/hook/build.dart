@@ -40,6 +40,15 @@ const _pinnedDigests = <String, String>{
       '23faaf6f993a39524d9dc7fafbb760e295f8bd5e9ffa46139bad2299fb5c80f3',
   'pdfium-linux-x64.tgz':
       'e76e0a37aefb843d56f04657475ce612157021b1ebc53d801f2fbfcc537ccf64',
+  // macOS is here because the hook returns early for iOS ONLY. Darwin's
+  // xcframework covers pdfium_flutter, not pdfium_dart, so a macOS build still
+  // asks this hook for a tarball — the first version of this change omitted
+  // these two and the hook's own hard-failure caught it:
+  //   Exception: No pinned SHA-256 for pdfium-mac-arm64.tgz
+  'pdfium-mac-arm64.tgz':
+      'f9bbf1ebdc459e5f5ff25b2d457cc21db55ebfc0cf3d89fc1b90ce5445dac394',
+  'pdfium-mac-x64.tgz':
+      'b31565aacda1f84393cd98438b06b49f21124888785e7dd1ddf015fa4406bd80',
   'pdfium-win-x64.tgz':
       '2e7af12674ac3716cb0e20369bb9fb269ceadfa2f0b0597097a520e6834175a0',
 };
