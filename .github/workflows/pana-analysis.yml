@@ -1,16 +1,16 @@
 name: Pana Analysis
 
 on:
-  push:
-    branches: [ master, main ]
-    paths-ignore:
-      - '**.md'
-      - 'doc/**'
-  # CI-PAUSE 2026-10-13: pull_request:
+  # CI-PAUSE 2026-10-13: push:
   # CI-PAUSE 2026-10-13:   branches: [ master, main ]
   # CI-PAUSE 2026-10-13:   paths-ignore:
   # CI-PAUSE 2026-10-13:     - '**.md'
   # CI-PAUSE 2026-10-13:     - 'doc/**'
+  # CI-PAUSE 2026-10-13: # CI-PAUSE 2026-10-13: pull_request:
+  # CI-PAUSE 2026-10-13: # CI-PAUSE 2026-10-13:   branches: [ master, main ]
+  # CI-PAUSE 2026-10-13: # CI-PAUSE 2026-10-13:   paths-ignore:
+  # CI-PAUSE 2026-10-13: # CI-PAUSE 2026-10-13:     - '**.md'
+  # CI-PAUSE 2026-10-13: # CI-PAUSE 2026-10-13:     - 'doc/**'
   workflow_dispatch:
 
 jobs:
