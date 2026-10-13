@@ -1,12 +1,13 @@
 name: Build and Deploy Flutter Web to GitHub Pages
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - 'doc/**'
+  workflow_dispatch:  # CI-PAUSE 2026-10-13: no trigger left
+  # CI-PAUSE 2026-10-13: push:
+  # CI-PAUSE 2026-10-13:   branches:
+  # CI-PAUSE 2026-10-13:     - master
+  # CI-PAUSE 2026-10-13:   paths-ignore:
+  # CI-PAUSE 2026-10-13:     - '**.md'
+  # CI-PAUSE 2026-10-13:     - 'doc/**'
 
 jobs:
   build:
