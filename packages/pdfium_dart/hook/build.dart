@@ -40,11 +40,11 @@ const _pinnedDigests = <String, String>{
       '23faaf6f993a39524d9dc7fafbb760e295f8bd5e9ffa46139bad2299fb5c80f3',
   'pdfium-linux-x64.tgz':
       'e76e0a37aefb843d56f04657475ce612157021b1ebc53d801f2fbfcc537ccf64',
-  // macOS is here because the hook returns early for iOS ONLY. Darwin's
-  // xcframework covers pdfium_flutter, not pdfium_dart, so a macOS build still
-  // asks this hook for a tarball — the first version of this change omitted
-  // these two and the hook's own hard-failure caught it:
-  //   Exception: No pinned SHA-256 for pdfium-mac-arm64.tgz
+  // macOS slices stay pinned so a future Darwin build that drops the
+  // OS.macOS early-return still verifies the tarball instead of fetching
+  // unpinned bytes. Flutter macOS apps must not take this path: the
+  // native-assets pdfium.framework collides with SwiftPM's PDFium.framework
+  // on case-insensitive APFS (hellohq#463).
   'pdfium-mac-arm64.tgz':
       'f9bbf1ebdc459e5f5ff25b2d457cc21db55ebfc0cf3d89fc1b90ce5445dac394',
   'pdfium-mac-x64.tgz':
@@ -56,7 +56,8 @@ const _pinnedDigests = <String, String>{
 void main(List<String> args) async {
   await build(args, (input, output) async {
     if (!input.config.buildCodeAssets) return;
-    if (input.config.code.targetOS == OS.iOS) return;
+    final os = input.config.code.targetOS;
+    if (os == OS.iOS || os == OS.macOS) return;
 
     final target = _PdfiumTarget.fromCodeConfig(input.config.code);
     final outputSubdir = _pdfiumRelease.replaceAll('%2F', '_');
