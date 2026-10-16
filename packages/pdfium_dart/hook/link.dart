@@ -19,10 +19,14 @@ Future<void> linkPdfiumAssets(LinkInput input, LinkOutputBuilder output) async {
   final pdfiumProvidedByFlutter =
       input.metadata[_darwinPdfiumProviderMetadataKey] ==
       _pdfiumFlutterXcframeworkProvider;
-  // On macOS, PDFium is linked into the app by the XCFramework, but Flutter tests still need to load the PDFium asset
-  // directly. Therefore we omit the PDFium asset only for iOS when provided by Flutter, but include it for macOS.
+  // When pdfium_flutter's XCFramework is in the app, do not also bundle
+  // pdfium_dart's native-assets pdfium.framework. On macOS those two names
+  // collide case-insensitively (PDFium vs pdfium); dyld on macOS 27 then
+  // rejects the install-name leaf mismatch (hellohq#463). Flutter tests that
+  // import only pdfium_dart never set this metadata, so they still get the
+  // native asset.
   final shouldOmitDarwinPdfiumAsset =
-      pdfiumProvidedByFlutter && targetOS == OS.iOS;
+      pdfiumProvidedByFlutter && (targetOS == OS.iOS || targetOS == OS.macOS);
 
   for (final asset in input.assets.encodedAssets) {
     final isPdfiumAsset =
